@@ -6,8 +6,52 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 
-import { BellIcon } from "react-native-heroicons/outline";
+import { BellIcon, MagnifyingGlassIcon } from "react-native-heroicons/outline";
+import Categories from "../components/Categories";
+import { useEffect, useState } from "react";
+
+import axios from "axios";
+import Recipies from "../components/Recipies";
 const HomeScreen = () => {
+  const [activeCategory, setActiveCategory] = useState("Beef");
+  const [meals, setMeals] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const handleChangeCategory = (category) => {
+    getRecipies(category);
+    setActiveCategory(category);
+    setMeals([]);
+  };
+  const getCategories = async () => {
+    try {
+      const response = await axios.get(
+        "https://themealdb.com/api/json/v1/1/categories.php"
+      );
+
+      if (response && response.data) {
+        setCategories(response.data.categories);
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+  const getRecipies = async (category = "Beef") => {
+    try {
+      const response = await axios.get(
+        `https://themealdb.com/api/json/v1/1/filter.php?c=${category}`
+      );
+
+      if (response && response.data) {
+        setMeals(response.data.meals);
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  useEffect(() => {
+    getCategories();
+    getRecipies();
+  }, []);
   return (
     <View className="flex-1 bg-white">
       <StatusBar style="dark" />
@@ -47,11 +91,30 @@ const HomeScreen = () => {
         {/* search bar */}
         <View className="mx-4 flex-row items-center rounded-full bg-black/5 p-[6px]">
           <TextInput
-            placeholder="Serach any recipe"
+            placeholder="Search any recipe"
             placeholderTextColor={"gray"}
-            style={{ fontSize: hp(1.7) }}
+            style={{ fontSize: hp(1.8) }}
             className="flex-1 text-base mb-1 pl-3 tracking-wider"
           />
+          <View className="bg-white rounded-full p-3">
+            <MagnifyingGlassIcon size={hp(2.5)} strokeWidth={3} color="gray" />
+          </View>
+        </View>
+
+        {/* categories */}
+        <View>
+          {categories.length > 0 && (
+            <Categories
+              categories={categories}
+              activeCategory={activeCategory}
+              handleChangeCategory={handleChangeCategory}
+            />
+          )}
+        </View>
+
+        {/* recipes */}
+        <View>
+          <Recipies meals={meals} categories={categories} />
         </View>
       </ScrollView>
     </View>
